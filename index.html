@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mistral Vibe - 开源命令行编程助手</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8b5cf6;
+            --primary-light: #a78bfa;
+            --primary-dark: #7c3aed;
+            --accent: #06b6d4;
+            --accent-light: #22d3ee;
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --bg-card-hover: rgba(255, 255, 255, 0.06);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --gradient-1: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+            --gradient-2: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #06b6d4 100%);
+            --glow: 0 0 40px rgba(139, 92, 246, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.4;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--primary);
+            top: -200px;
+            right: -200px;
+            animation-delay: 0s;
+        }
+
+        .bg-orb-2 {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            bottom: -150px;
+            left: -150px;
+            animation-delay: -10s;
+        }
+
+        .bg-orb-3 {
+            width: 300px;
+            height: 300px;
+            background: #ec4899;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 60px 0;
+            position: relative;
+        }
+
+        .glow-ring {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        .glow-ring-1 { width: 300px; height: 300px; top: 20%; left: 10%; }
+        .glow-ring-2 { width: 400px; height: 400px; top: 30%; right: 5%; animation-delay: 1s; }
+        .glow-ring-3 { width: 350px; height: 350px; bottom: 20%; left: 20%; animation-delay: 2s; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        .ascii-art {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--primary-light);
+            margin-bottom: 32px;
+            line-height: 1.15;
+            white-space: pre;
+            opacity: 0.9;
+            text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+        }
+
+        .badge-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+        }
+
+        .badge-python {
+            background: rgba(55, 118, 171, 0.2);
+            border-color: rgba(55, 118, 171, 0.3);
+            color: #63b3ed;
+        }
+
+        .badge-license {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .badge-version {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: rgba(139, 92, 246, 0.3);
+            color: var(--primary-light);
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .tagline {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.5);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--primary);
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s ease-in-out infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        /* Sections */
+        section {
+            padding: 100px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        section:last-child {
+            border-bottom: none;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-label {
+            display: inline-block;
+            padding: 6px 14px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-light);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            font-size: clamp(1.75rem, 5vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .section-desc {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            backdrop-filter: blur(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            background: var(--bg-card-hover);
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: var(--glow);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: linear-gradient(145deg, #0d0d14, #13131f);
+            border-radius: 16px;
+            padding: 24px;
+            overflow-x: auto;
+            margin: 24px 0;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        :not(pre) > code {
+            background: rgba(139, 92, 246, 0.15);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: var(--primary-light);
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 24px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .warning-box::before {
+            content: '⚠️';
+            font-size: 1.2rem;
+        }
+
+        .warning-box p {
+            margin: 0;
+            color: #fbbf24;
+        }
+
+        /* Install Tabs */
+        .install-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .install-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 16px 24px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: var(--gradient-1);
+            transition: width 0.3s;
+        }
+
+        .tab.active {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .tab.active::after {
+            width: 60%;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 32px;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Steps */
+        .steps-container {
+            display: grid;
+            gap: 24px;
+        }
+
+        .step {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            padding: 28px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            transition: all 0.3s;
+        }
+
+        .step:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(139, 92, 246, 0.2);
+        }
+
+        .step-number {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            border-radius: 12px;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .step-content h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .step-content p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+
+        .step-content pre {
+            margin: 0;
+        }
+
+        /* Config Section */
+        .config-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+
+        .config-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .config-card h3::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+        }
+
+        /* Lists */
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            position: relative;
+            padding-left: 24px;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        ul li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        ol {
+            padding-left: 24px;
+        }
+
+        ol li {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        ol li::marker {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        footer p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* TOC Sidebar */
+        .toc-sidebar {
+            position: fixed;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 200px;
+            display: none;
+            z-index: 100;
+        }
+
+        @media (min-width: 1200px) {
+            .toc-sidebar {
+                display: block;
+            }
+        }
+
+        .toc-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+        }
+
+        .toc-card h4 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .toc-card ul {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toc-card li::before {
+            display: none;
+        }
+
+        .toc-card a {
+            display: block;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .toc-card a:hover,
+        .toc-card a.active {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--primary-light);
+        }
+
+        /* Copy Button */
+        .copy-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+
+        .code-wrapper:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            section {
+                padding: 60px 0;
+            }
+
+            .feature-card {
+                padding: 24px;
+            }
+
+            .step {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .install-tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                text-align: center;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+        }
+
+        /* Scroll animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="bg-effects">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- Glow Rings -->
+    <div class="glow-ring glow-ring-1"></div>
+    <div class="glow-ring glow-ring-2"></div>
+    <div class="glow-ring glow-ring-3"></div>
+
+    <header>
+        <div class="container">
+            <div class="ascii-art">
+██████████████████░░
+██████████████████░░
+████  ██████  ████░░
+████    ██    ████░░
+████          ████░░
+████  ██  ██  ████░░
+██      ██      ██░░
+██████████████████░░
+██████████████████░░</div>
+            <div class="badge-container">
+                <span class="badge badge-version">v0.1.0+</span>
+                <span class="badge badge-python">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z"/></svg>
+                    Python 3.12+
+                </span>
+                <span class="badge badge-license">Apache License 2.0</span>
+            </div>
+            <h1>Mistral Vibe</h1>
+            <p class="tagline">下一代开源命令行编程助手，让 AI 帮你写代码</p>
+            <div class="cta-buttons">
+                <a href="#install" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    快速安装
+                </a>
+                <a href="https://github.com/mistralai/mistral-vibe" class="btn btn-secondary" target="_blank">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    GitHub 仓库
+                </a>
+            </div>
+            <div class="scroll-indicator">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="features" class="fade-in">
+            <div class="section-header">
+                <span class="section-label">核心特性</span>
+                <h2>为什么选择 Vibe？</h2>
+                <p class="section-desc">集成了最先进 AI 技术的命令行编程助手，让你的开发工作流快人一步</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>智能对话</h3>
+                    <p>基于 Mistral 模型的理解能力，能够理解复杂的编程需求并分解执行</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛠️</div>
+                    <h3>强大工具集</h3>
+                    <p>文件读写、代码搜索、Git 操作、Shell 命令执行，一应俱全</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>上下文感知</h3>
+                    <p>自动分析项目结构，为你提供精准的代码上下文和建议</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✨</div>
+                    <h3>现代化体验</h3>
+                    <p>命令补全、主题美化、持久历史，打造流畅的 CLI 体验</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>高度可定制</h3>
+                    <p>自由配置模型、工具权限、提示词，满足各种开发需求</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>安全可控</h3>
+                    <p>工具执行前需要确认，每一步操作都在你的掌控之中</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="install" class="fade-in">
+            <div class="section-header">
+                <span class="section-label">开始使用</span>
+                <h2>安装 Vibe</h2>
+                <p class="section-desc">一行命令即可开始使用</p>
+            </div>
+
+            <div class="install-container">
+                <div class="install-tabs">
+                    <button class="tab active" data-tab="linux">Linux / macOS</button>
+                    <button class="tab" data-tab="windows">Windows</button>
+                </div>
+
+                <div id="linux" class="tab-content active">
+                    <h3 style="margin-bottom: 16px;">一键安装（推荐）</h3>
+                    <pre><code class="code-wrapper">curl -LsSf https://mistral.ai/vibe/install.sh | bash</code></pre>
+
+                    <h3 style="margin: 24px 0 16px;">使用 uv 安装</h3>
+                    <pre><code>uv tool install mistral-vibe</code></pre>
+
+                    <h3 style="margin: 24px 0 16px;">使用 pip 安装</h3>
+                    <pre><code>pip install mistral-vibe</code></pre>
+                </div>
+
+                <div id="windows" class="tab-content">
+                    <p style="margin-bottom: 16px;">首先安装 uv：</p>
+                    <pre><code class="code-wrapper">powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"</code></pre>
+
+                    <h3 style="margin: 24px 0 16px;">然后安装 Vibe</h3>
+                    <pre><code>uv tool install mistral-vibe</code></pre>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <p><strong>注意：</strong>Mistral Vibe 可以在 Windows 上运行，但我们官方主要支持 UNIX 环境。</p>
+            </div>
+        </section>
+
+        <section id="quick-start" class="fade-in">
+            <div class="section-header">
+                <span class="section-label">快速上手</span>
+                <h2>第一次使用</h2>
+                <p class="section-desc">只需几个简单步骤，即可开始你的 AI 编程之旅</p>
+            </div>
+
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>进入你的项目目录</h3>
+                        <pre><code>cd /path/to/your/project</code></pre>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>启动 Vibe</h3>
+                        <pre><code>vibe</code></pre>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>配置 API Key</h3>
+                        <p>首次运行会自动创建配置文件，并提示你输入 Mistral API Key</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>开始对话</h3>
+                        <pre><code>> 帮我查找项目中所有的 "TODO" 注释
+
+🤖 我将使用 grep 工具来搜索当前目录...
+
+> grep(pattern="TODO", path=".")
+
+...搜索结果...
+
+🤖 我在您的项目中找到了以下 "TODO" 注释。</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="usage" class="fade-in">
+            <div class="section-header">
+                <span class="section-label">详细用法</span>
+                <h2>使用指南</h2>
+                <p class="section-desc">掌握 Vibe 的各种使用技巧</p>
+            </div>
+
+            <div class="config-card">
+                <h3>交互模式</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">直接运行 <code>vibe</code> 进入交互式对话：</p>
+                <ul>
+                    <li><strong>多行输入</strong>：按 <code>Ctrl+J</code> 或 <code>Shift+Enter</code> 换行</li>
+                    <li><strong>引用文件</strong>：使用 <code>@</code> 符号（如 <code>> 读取 @src/main.py</code>）</li>
+                    <li><strong>执行命令</strong>：使用 <code>!</code> 前缀（如 <code>> !ls -la</code>）</li>
+                </ul>
+            </div>
+
+            <div class="config-card">
+                <h3>带提示启动</h3>
+                <pre><code>vibe "请重构 cli/main.py 中的主函数"</code></pre>
+            </div>
+
+            <div class="config-card">
+                <h3>程序化模式</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">适合在脚本中使用：</p>
+                <pre><code>vibe --prompt "请重构 cli/main.py 中的主函数"</code></pre>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">默认启用自动批准模式</p>
+            </div>
+
+            <div class="config-card">
+                <h3>自动批准</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">使用 <code>--auto-approve</code> 跳过确认提示：</p>
+                <pre><code>vibe --auto-approve "批量修改文件"</code></pre>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 12px;">交互模式下可按 <code>Shift+Tab</code> 切换开关</p>
+            </div>
+        </section>
+
+        <section id="configuration" class="fade-in">
+            <div class="section-header">
+                <span class="section-label">配置选项</span>
+                <h2>高级配置</h2>
+                <p class="section-desc">完全自定义你的 Vibe 体验</p>
+            </div>
+
+            <div class="config-card">
+                <h3>配置文件位置</h3>
+                <p style="color: var(--text-secondary);">Vibe 按以下顺序查找配置文件：</p>
+                <ol style="margin-top: 12px;">
+                    <li><code>./.vibe/config.toml</code>（项目级别）</li>
+                    <li><code>~/.vibe/config.toml</code>（用户级别）</li>
+                </ol>
+            </div>
+
+            <div class="config-card">
+                <h3>API Key 配置</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">支持多种配置方式：</p>
+                <ol>
+                    <li><strong>交互式设置</strong>：首次运行自动提示</li>
+                    <li><strong>环境变量</strong>：<pre><code>export MISTRAL_API_KEY="your_key"</code></pre></li>
+                    <li><strong>.env 文件</strong>：<pre><code># ~/.vibe/.env
+MISTRAL_API_KEY=your_key</code></pre></li>
+                </ol>
+            </div>
+
+            <div class="config-card">
+                <h3>自定义系统提示</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">在 <code>~/.vibe/prompts/</code> 创建自定义提示：</p>
+                <pre><code># ~/.vibe/config.toml
+system_prompt_id = "my_custom_prompt"</code></pre>
+            </div>
+
+            <div class="config-card">
+                <h3>自定义代理配置</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">在 <code>~/.vibe/agents/</code> 创建专用配置：</p>
+                <pre><code># ~/.vibe/agents/redteam.toml
+active_model = "devstral-2"
+system_prompt_id = "redteam"
+disabled_tools = ["write_file"]
+
+[tools.bash]
+permission = "always"</code></pre>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 12px;">使用：<code>vibe --agent redteam</code></p>
+            </div>
+
+            <div class="config-card">
+                <h3>MCP 服务器配置</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">扩展 Vibe 的能力：</p>
+                <pre><code>[[mcp_servers]]
+name = "fetch_server"
+transport = "stdio"
+command = "uvx"
+args = ["mcp-server-fetch"]</code></pre>
+            </div>
+
+            <div class="config-card">
+                <h3>工具权限控制</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">使用模式匹配启用/禁用工具：</p>
+                <pre><code># 仅启用特定工具
+enabled_tools = ["read_file", "grep"]
+
+# 使用 glob 模式
+enabled_tools = ["serena_*"]
+
+# 正则表达式
+enabled_tools = ["re:^serena_.*$"]
+
+# 禁用某些工具
+disabled_tools = ["mcp_*", "write_file"]</code></pre>
+            </div>
+
+            <div class="config-card">
+                <h3>自定义主目录</h3>
+                <pre><code>export VIBE_HOME="/path/to/custom/directory"</code></pre>
+            </div>
+        </section>
+
+        <section id="editors" class="fade-in">
+            <div class="section-header">
+                <span class="section-label">集成开发</span>
+                <h2>编辑器支持</h2>
+                <p class="section-desc">在熟悉的编辑器中使用 Vibe</p>
+            </div>
+
+            <div class="config-card">
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">Mistral Vibe 支持 <a href="https://agentclientprotocol.com/overview/clients" target="_blank" style="color: var(--primary-light);">Agent Client Protocol (ACP)</a>，可在以下编辑器中使用：</p>
+                <ul>
+                    <li>VS Code</li>
+                    <li>Neovim</li>
+                    <li>JetBrains IDEs</li>
+                    <li>其他支持 ACP 的编辑器</li>
+                </ul>
+                <p style="margin-top: 16px;"><a href="docs/acp-setup.md" style="color: var(--primary-light);">查看详细设置指南 →</a></p>
+            </div>
+        </section>
+
+        <section id="resources" class="fade-in">
+            <div class="section-header">
+                <span class="section-label">更多资源</span>
+                <h2>相关链接</h2>
+            </div>
+
+            <div class="features-grid">
+                <a href="CHANGELOG.md" class="feature-card" style="text-decoration: none;" target="_blank">
+                    <div class="feature-icon">📋</div>
+                    <h3 style="color: var(--text-primary);">更新日志</h3>
+                    <p style="color: var(--text-secondary);">了解每个版本的新功能和修复</p>
+                </a>
+                <a href="CONTRIBUTING.md" class="feature-card" style="text-decoration: none;" target="_blank">
+                    <div class="feature-icon">🤝</div>
+                    <h3 style="color: var(--text-primary);">贡献指南</h3>
+                    <p style="color: var(--text-secondary);">如何反馈问题或贡献代码</p>
+                </a>
+                <a href="https://github.com/mistralai/mistral-vibe" class="feature-card" style="text-decoration: none;" target="_blank">
+                    <div class="feature-icon">🐙</div>
+                    <h3 style="color: var(--text-primary);">GitHub</h3>
+                    <p style="color: var(--text-secondary);">查看源码、提交问题、关注更新</p>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- TOC Sidebar -->
+    <aside class="toc-sidebar">
+        <div class="toc-card">
+            <h4>目录</h4>
+            <ul>
+                <li><a href="#features">核心特性</a></li>
+                <li><a href="#install">安装 Vibe</a></li>
+                <li><a href="#quick-start">快速上手</a></li>
+                <li><a href="#usage">使用指南</a></li>
+                <li><a href="#configuration">高级配置</a></li>
+                <li><a href="#editors">编辑器支持</a></li>
+                <li><a href="#resources">相关链接</a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <footer>
+        <div class="container">
+            <p>Copyright 2025 Mistral AI</p>
+            <p style="margin-top: 8px;">Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a></p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            document.querySelectorAll('.install-tabs .tab').forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    var tabName = this.getAttribute('data-tab');
+                    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+                    document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+                    this.classList.add('active');
+                    document.getElementById(tabName).classList.add('active');
+                });
+            });
+
+            // Copy button functionality
+            document.querySelectorAll('pre').forEach(function(block) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'code-wrapper';
+                block.parentNode.insertBefore(wrapper, block);
+                wrapper.appendChild(block);
+
+                var copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.textContent = '复制';
+                wrapper.appendChild(copyBtn);
+
+                copyBtn.addEventListener('click', function() {
+                    var code = block.querySelector('code');
+                    navigator.clipboard.writeText(code.textContent).then(function() {
+                        copyBtn.textContent = '已复制';
+                        setTimeout(function() { copyBtn.textContent = '复制'; }, 2000);
+                    });
+                });
+            });
+
+            // Scroll animations
+            var observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in').forEach(function(el) { observer.observe(el); });
+
+            // TOC active state
+            var sections = document.querySelectorAll('section[id]');
+            var tocLinks = document.querySelectorAll('.toc-sidebar a');
+
+            window.addEventListener('scroll', function() {
+                var current = '';
+                sections.forEach(function(section) {
+                    var sectionTop = section.offsetTop - 100;
+                    if (window.scrollY >= sectionTop) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                tocLinks.forEach(function(link) {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + current) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+            // Smooth scroll for all anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
